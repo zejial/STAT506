@@ -1,0 +1,225 @@
+---
+title: "506_hw1"
+format: html
+editor: visual
+---
+
+link: git\@github.com:zejial/STAT506.git
+
+## **Problem 1 - Wine data**
+
+a,b.
+
+```{r}
+wine_data <- read.csv("/Users/zejialiu/Desktop/Rstudio_work/wine/wine.data", header = FALSE, sep = ",")
+
+column_names <- data.frame("Class", "Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Total phenols", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins", "Color intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")
+
+colnames(wine_data) <- column_names
+
+```
+
+1.  The wine with the highest alcohol content belongs to which class?
+
+```{r}
+max_alcohol <- max(wine_data$Alcohol)
+
+wine_maxalco <- wine_data[wine_data$Alcohol == max_alcohol, ]
+
+wine_class <- wine_maxalco[,wine_maxalco$'Class']
+
+wine_class
+```
+
+2.  The wine with the lowest alcohol content belongs to which class?
+
+```{r}
+min_alcohol <- min(wine_data$Alcohol)
+
+wine_minalco <- wine_data[wine_data$Alcohol == min_alcohol, ]
+
+wine_class2 <- wine_minalco[,wine_maxalco$Class]
+
+wine_class2
+```
+
+3.  [German beers have, on average, 114 mg/l of magnesium](https://mgwater.com/beer.shtml). How many of these wines have higher levels of magnesium than that? (You may assume that the magnesium reported in the data is in the same units.)
+
+```{r}
+higher_mg <- wine_data[which(wine_data$Magnesium > 114),]
+nrow(higher_mg)
+```
+
+4.  Within each class, how many wines have higher levels of magnesium than average German beer?
+
+```{r}
+higher_mg1 <- higher_mg[higher_mg$'Class' == 1,]
+nrow(higher_mg1)
+
+```
+
+```{r}
+higher_mg2 <- higher_mg[higher_mg$'Class' == 2,]
+nrow(higher_mg2)
+```
+
+```{r}
+higher_mg3 <- higher_mg[higher_mg$'Class' == 3,]
+nrow(higher_mg3)
+```
+
+d\. Create a table identifying the average value of each variable, providing one row for the overall average, and one row per class with class averages. (This table does not need to be \"fancy\" but should clearly identify what each value represents.)
+
+```{r}
+overall_avg <- sapply(wine_data[,-1], mean)
+overall_avg <- data.frame(Class = "Overall",t(overall_avg))
+
+Class1 <- sapply(wine_data[wine_data[1] == 1, -1], mean)
+Class1 <- data.frame(Class = 1 ,t(Class1))
+
+Class2 <- sapply(wine_data[wine_data[1] == 2, -1], mean)
+Class2 <- data.frame(Class = 2 ,t(Class2))
+
+Class3 <- sapply(wine_data[wine_data[1] == 3, -1], mean)
+Class3 <- data.frame(Class = 3 ,t(Class3))
+
+final_table <- rbind(overall_avg, Class1, Class2, Class3)
+final_table
+```
+
+e\. Carry out a series of t-tests to examine whether the level of Ash differs across the three classes. Present the R output and interpret the results. (You may use an existing R function to carry out the t-test, or for **minor extra credit**, manually write your own calculation of the t-test p-values.)
+
+```{r}
+class1_ash <- wine_data$Ash[wine_data$Class == 1]
+class2_ash <- wine_data$Ash[wine_data$Class == 2]
+class3_ash <- wine_data$Ash[wine_data$Class == 3]
+
+t_test_result_1_2 <- t.test(class1_ash, class2_ash)
+t_test_result_1_3 <- t.test(class1_ash, class3_ash)
+t_test_result_2_3 <- t.test(class2_ash, class3_ash)
+
+print(t_test_result_1_2)
+print(t_test_result_1_3)
+print(t_test_result_2_3)
+```
+
+## **Problem 2 - Perfect Powers**
+
+a\. Write a function \"`isPerfectPower`\" to identify whether a given integer is a perfect power for a given power. 
+
+```{r}
+isPerfectPower <- function(x,power){
+  root <- round(x^(1/power))
+  is_perfect <- (root^power == x)
+  
+  result <- list("isPerfect" = is_perfect, "root" = root)
+  return(result)
+}
+
+isPerfectPower(27, power = 2)
+```
+
+b\. Demonstrate your function works. Do so by writing another function \"`findRootPower`\" which calls your first function, using a loop to identify both the root and power. Your function should identify the *lowest* power for which the input is perfect.
+
+```{r}
+findRootPower <- function(x){
+  for (power in 2:sqrt(x)){
+    result <- isPerfectPower(x,power)
+    if (result$isPerfect){
+      equation <- paste(x,"=", result$root,"^", power)
+      return(equation)
+    }
+  }
+  return("The input is not a perfect power.")
+}
+
+findRootPower(16)
+```
+
+## **Problem 3 - ChatGPT**
+
+Produce two R functions: The first should take in a vector of suits and a vector of ranks representing a 5-card hand, and return the name of the hand (in 5 card stud poker). The second should simulate dealing a round of cards in a game of poker (5 card stud). The user should be able to specify the number of players. Show the user all the hands, and use the first function to display the name of each of the hands.
+
+```{r}
+# Function to evaluate the hand
+evaluate_hand <- function(suits, ranks) {
+  sorted_ranks <- sort(ranks) #sorted_ranks sorts the card ranks in ascending order to simplify checking for straight patterns.
+  
+  unique_suits <- unique(suits)
+  unique_ranks <- unique(sorted_ranks)#store the unique suits and ranks in the hand, respectively.
+  
+  if (length(unique_suits) == 1) {
+    if (all(sorted_ranks %in% c(10, 11, 12, 13, 14))) {
+      return("Royal Flush")
+    }#If all ranks are in the set {10, 11, 12, 13, 14}, it's a Royal Flush.
+    
+    if (any(diff(sorted_ranks) != 1) == FALSE) {
+      return("Straight Flush")
+    }#If the differences between all adjacent sorted ranks are 1, it's a Straight Flush.
+    
+    return("Flush")
+  }
+  
+  if (length(unique_ranks) == 2) {
+    if (any(table(ranks) == 4)) {
+      return("Four of a Kind")
+    }#Check if there are only 2 unique ranks, which implies a Four-of-a-Kind or Full House.
+    
+    return("Full House")
+  }
+  
+  if (any(diff(sorted_ranks) != 1) == FALSE) {
+    return("Straight")
+  }
+  
+  if (length(unique_ranks) == 3) {
+    return("Three of a Kind")
+  }
+  
+  if (length(unique_ranks) == 4) {
+    return("One Pair")
+  }
+  
+  if (length(unique_ranks) == 5) {
+    return("High Card")
+  }
+  
+  return("Invalid Hand")
+}
+
+# Function to simulate a round of poker
+simulate_poker_round <- function(num_players) {
+  suits <- c("Hearts", "Diamonds", "Clubs", "Spades")
+  ranks <- c(2:14) # 2-10, J(11), Q(12), K(13), A(14)
+  
+  deck <- expand.grid(suits = suits, ranks = ranks)
+  shuffled_deck <- deck[sample(nrow(deck)),]#creates a deck by combining all possible combinations of suits and ranks using the expand.grid function and shuffles the deck randomly.
+  
+  for (player in 1:num_players) {
+    hand <- shuffled_deck[(5*(player-1)+1):(5*player),]
+    hand_name <- evaluate_hand(hand$suits, hand$ranks)
+    
+    cat(sprintf("Player %d Hand: \n", player))
+    print(hand)
+    cat(sprintf("Hand Type: %s\n\n", hand_name))
+  }
+}#Loop through each player, deal a hand, and evaluate it.
+
+# Test the functions
+simulate_poker_round(3)
+
+```
+
+Determine whether the code produces accurate results. Explain how you made this determination. Check at least the following:
+
+-   Are the inputs and outputs as described above? Yes.
+
+-   Are the hands valid (e.g. real cards, no duplicates, right number)?
+
+    The code has real cards, no duplicates, right number. The code creates a standard deck of 52 cards using suits (Hearts, Diamonds, Clubs, Spades) and ranks (2 to Ace). It shuffles the deck and deals 5 cards to each player. It ensures that there are no duplicates in the cards dealt to each player. It also ensures that each hand consists of exactly 5 cards, which is the standard in poker. The code handles the validity of hands correctly.
+
+-   Are the names of the hands correct? Yes.
+
+-   Does it ensure no duplicates in cards across hands? What happens if you ask for more than 10 hands to be dealt (as there are only 52 cards in a standard deck)?
+
+    The code ensures that there are no duplicates in cards across hands by randomly shuffling the deck and dealing cards without replacement. If you try to deal more than 10 hands (i.e., more than 50 cards), you will run out of cards in a standard deck (52 cards), and an error will occur.
